@@ -1,0 +1,97 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>德语学习库</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="eyebrow">Deutsch Study</p>
+      <h1>德语个人学习库</h1>
+      <p>本地演示登录 · 德中翻译 · AI 批改 · 网盘课件预览</p>
+    </div>
+    <button id="logoutBtn" class="ghost hidden">退出</button>
+  </header>
+
+  <main>
+    <section id="loginView" class="card hero">
+      <h2>登录德语学习库</h2>
+      <p class="muted">本版本不接 Supabase，不做云端同步。账号只用于当前浏览器本地演示。</p>
+      <label>邮箱<input id="email" type="email" placeholder="orange@example.com"></label>
+      <label>密码<input id="password" type="password" placeholder="随便输入一个演示密码"></label>
+      <div class="actions">
+        <button id="loginBtn">登录 / 注册</button>
+      </div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <nav class="tabs">
+        <button data-tab="home" class="active">首页</button>
+        <button data-tab="translate">翻译</button>
+        <button data-tab="correct">AI批改</button>
+        <button data-tab="resources">PDF/听力</button>
+        <button data-tab="netdisk">百度网盘</button>
+        <button data-tab="tools">工具</button>
+      </nav>
+
+      <section id="home" class="tab active card">
+        <h2>今天学什么？</h2>
+        <div class="grid">
+          <div class="mini"><b>A1-A2</b><p>冠词、动词变位、基础句型。</p></div>
+          <div class="mini"><b>B1-B2</b><p>从句、虚拟式、写作表达。</p></div>
+          <div class="mini"><b>听力</b><p>导入 MP3/PDF 后在资源区预览。</p></div>
+        </div>
+        <label>今日打卡分钟<input id="minutes" type="number" min="0" value="20"></label>
+        <label>备注<textarea id="note" rows="3">今天完成德语学习。</textarea></label>
+        <button id="checkinBtn">保存本地打卡</button>
+        <div id="checkinResult" class="result"></div>
+      </section>
+
+      <section id="translate" class="tab card">
+        <h2>德中实时翻译</h2>
+        <select id="direction"><option value="de-zh">德语 → 中文</option><option value="zh-de">中文 → 德语</option></select>
+        <textarea id="translateText" rows="6" placeholder="Ich lerne Deutsch."></textarea>
+        <button id="translateBtn">翻译</button>
+        <div id="translateResult" class="result"></div>
+      </section>
+
+      <section id="correct" class="tab card">
+        <h2>AI 德语作文/句子批改</h2>
+        <select id="level"><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select>
+        <textarea id="correctText" rows="8" placeholder="Ich habe ein Termin und ich gehe zu der Arzt."></textarea>
+        <button id="correctBtn">AI 批改</button>
+        <div id="correctResult" class="result"></div>
+      </section>
+
+      <section id="resources" class="tab card">
+        <h2>PDF / 听力 / 视频预览</h2>
+        <p class="muted">粘贴 PDF、MP3、MP4 或后端代理 URL，手机/平板/电脑都能直接打开。</p>
+        <label>资源名称<input id="resName" placeholder="A1 Kursbuch / Goethe Hören"></label>
+        <label>资源 URL<input id="resUrl" placeholder="https://...pdf 或 /api/netdisk-file?... "></label>
+        <button id="addResourceBtn">添加到本地资源</button>
+        <div id="resourceList"></div>
+      </section>
+
+      <section id="netdisk" class="tab card">
+        <h2>百度网盘目录读取</h2>
+        <p class="muted">真实读取个人网盘必须配置 Vercel 环境变量 <code>BAIDU_NETDISK_ACCESS_TOKEN</code>。AppID/AppKey/Secret/SignKey 不能单独替代 access_token。</p>
+        <label>目录路径<input id="netdiskDir" value="/Deutsch"></label>
+        <button id="netdiskListBtn">读取目录</button>
+        <div id="netdiskResult" class="result"></div>
+      </section>
+
+      <section id="tools" class="tab card">
+        <h2>辅助工具</h2>
+        <button id="exportBtn">导出本地数据 JSON</button>
+        <label>导入本地数据 JSON<textarea id="importText" rows="5"></textarea></label>
+        <button id="importBtn">导入</button>
+      </section>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+﻿{
+  "name": "deyu-vercel-simple",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx vercel dev"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}
