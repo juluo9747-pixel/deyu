@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>德语个人学习库</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <section id="authPanel" class="auth-panel hidden">
+    <div class="auth-card">
+      <h1>登录德语学习库</h1>
+      <p class="muted">本地演示登录：邮箱 + 密码进入学习库，数据保存在当前部署后端。</p>
+      <div class="info-box">
+        <b>手机/平板登录提示</b>
+        <p class="small">不要在手机上打开 localhost。请改用下面显示的局域网地址打开同一个站点。</p>
+        <div id="netInfo" class="small">正在获取本机访问地址…</div>
+      </div>
+      <div class="row">
+        <label>邮箱<input id="authEmail" type="email" placeholder="you@example.com" /></label>
+        <label>密码<input id="authPassword" type="password" placeholder="••••••••" /></label>
+      </div>
+      <div class="actions">
+        <button id="loginBtn">登录</button>
+        <button id="registerBtn" type="button">注册并登录</button>
+      </div>
+      <pre id="authMsg"></pre>
+    </div>
+  </section>
+
+  <section id="appShell" class="hidden">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Deutsch Study · 个人版</p>
+      <h1>德语课程、真题、习题和音频分类学习库</h1>
+      <p>从百度网盘/本地下载资料后上传：视频课程、口语音频、真题、书本习题、写作和造句训练统一管理。课程学完后自动推荐匹配练习。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main>
+    <nav class="tabs">
+      <button data-tab="dashboard" class="active">总览</button>
+      <button data-tab="netdisk">网盘一键导入</button>
+      <button data-tab="upload">本地补充上传</button>
+      <button data-tab="courses">课程</button>
+      <button data-tab="goethe">歌德考试</button>
+      <button data-tab="questions">真题/习题</button>
+      <button data-tab="wrongbook">错题本</button>
+      <button data-tab="vocab">单词词库</button>
+      <button data-tab="lookup">查词/语法</button>
+      <button data-tab="translate">实时翻译</button>
+      <button data-tab="resources">课件/听力</button>
+      <button data-tab="tools">工具集</button>
+      <button data-tab="plan">一年到B2</button>
+      <button data-tab="import">批量导入</button>
+      <button data-tab="ai">AI 训练</button>
+      <button data-tab="aiChat">AI 对话</button>
+      <button data-tab="aiModels">AI模型</button>
+      <button data-tab="searchNet">AI全网搜索</button>
+    </nav>
+
+    <section id="dashboard" class="tab active">
+      <div class="grid two">
+        <article class="card">
+          <h2>学习流程</h2>
+          <ol class="steps">
+            <li>网盘一键拉取 PDF/MP4/MP3 目录总览，无需先下载到本地。</li>
+            <li>DeepSeek 自动识别 A1/A2/B1/B2 和课本/网课视频/听力音频/真题习题。</li>
+            <li>系统自动归档资料、创建课程、批量绑定 materialId。</li>
+            <li>自动生成配套习题与每日德语听力/口语练习，并执行去重。</li>
+            <li>异常习题统一显示“待修正”，支持一键批量修正后继续推荐练习。</li>
+          </ol>
+        </article>
+        <article class="card warning">
+          <h2>防止题目写错的校验</h2>
+          <ul>
+            <li>选择题答案必须出现在选项里。</li>
+            <li>每题必须有答案和解析。</li>
+            <li>听力题建议绑定音频 ID。</li>
+            <li>导入后会显示“待修正”标记。</li>
+            <li>重要真题建议保留原文截图/PDF作为 source。</li>
+          </ul>
+        </article>
+      </div>
+      <div class="card">
+        <h2>最近资料</h2>
+        <div id="recentMaterials" class="list"></div>
+      </div>
+    </section>
+
+    <section id="netdisk" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>百度网盘课程一键导入</h2>
+          <p class="muted">优先读取网盘目录，不把全部文件下载到本地。可填百度网盘 Access Token + 目录，也可粘贴网盘目录 JSON 做模拟/离线导入。</p>
+          <form id="netdiskForm" class="form">
+            <label>百度网盘 Access Token（可留空，使用服务端 BAIDU_NETDISK_ACCESS_TOKEN）<input id="baiduToken" type="password" placeholder="access_token" /></label>
+            <div class="row">
+              <label>网盘目录<input id="baiduDir" value="/" /></label>
+              <label>最多读取<input id="baiduLimit" type="number" value="1000" min="1" max="1000" /></label>
+            </div>
+            <label>离线目录 JSON（可选；留空则调用百度网盘接口）<textarea id="netdiskItems" class="code" spellcheck="false" placeholder='[{"name":"A1 Goethe Hören 01.mp3","path":"/Deutsch/A1/hoeren01.mp3","size":123456,"md5":"..."},{"name":"B1 Kursbuch Kapitel 1.pdf","path":"/Deutsch/B1/book.pdf","size":456789}]'></textarea></label>
+            <div class="actions">
+              <button id="netdiskPreviewBtn" type="button">预览AI分类</button>
+              <button id="netdiskImportBtn" type="button">一键导入并建课</button>
+              <button id="loadIssuesBtn" type="button">刷新待修正</button>
+              <button id="fixIssuesBtn" type="button">一键批量修正</button>
+            </div>
+          </form>
+          <pre id="netdiskResult"></pre>
+        </article>
+        <article class="card warning">
+          <h2>自动化规则</h2>
+          <ul>
+            <li>PDF/文档：识别课本、真题习题，保留 remotePath 与 materialId。</li>
+            <li>MP4/视频：归入网课视频/口语课程，自动创建课程。</li>
+            <li>MP3/音频：归入听力音频，同步到【每日德语】听力/口语练习。</li>
+            <li>导入后自动执行 /api/dedupe，重复资料只保留一份。</li>
+            <li>DeepSeek 不可用时，本地规则兜底；无讯飞密钥时继续用浏览器 de-DE 朗读。</li>
+          </ul>
+        </article>
+      </div>
+      <div class="grid two">
+        <article class="card"><h2>网盘分类预览 / 导入结果</h2><div id="netdiskPreview" class="list"></div></article>
+        <article class="card"><h2>异常习题汇总</h2><div id="issueList" class="list"></div></article>
+      </div>
+    </section>
+
+    <section id="goethe" class="tab">
+      <div class="card">
+        <h2>歌德考试专区</h2>
+        <p class="muted">按歌德考试思路整理 A1-B2 的听、说、读、写训练。你上传的真题、音频、课程可以用标签绑定到这里。</p>
+        <div class="goethe-grid">
+          <div class="exam-card"><h3>A1</h3><p>基础问候、自我介绍、购物、问路、简单邮件。</p><button onclick="filterExam('A1')">查看 A1 题</button></div>
+          <div class="exam-card"><h3>A2</h3><p>日常生活、工作学习、过去经历、简单观点表达。</p><button onclick="filterExam('A2')">查看 A2 题</button></div>
+          <div class="exam-card"><h3>B1</h3><p>独立表达、较长阅读、邮件/观点写作、情景口语。</p><button onclick="filterExam('B1')">查看 B1 题</button></div>
+          <div class="exam-card"><h3>B2</h3><p>复杂文本、论证写作、观点讨论、接近真实场景表达。</p><button onclick="filterExam('B2')">查看 B2 题</button></div>
+        </div>
+      </div>
+      <div class="grid four">
+        <article class="card"><h2>听力 Hören</h2><p>上传音频后，题目标签写：歌德, 听力, A1/A2/B1/B2。</p></article>
+        <article class="card"><h2>阅读 Lesen</h2><p>按题型分类：判断、匹配、选择、信息定位。</p></article>
+        <article class="card"><h2>写作 Schreiben</h2><p>邮件、短文、观点文，交给 AI 写作教练批改。</p></article>
+        <article class="card"><h2>口语 Sprechen</h2><p>自我介绍、图片描述、观点讨论、角色扮演。</p></article>
+      </div>
+      <div class="card">
+        <h2>歌德题库结果</h2>
+        <div id="goetheList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="upload" class="tab">
+      <div class="card">
+        <h2>上传视频/音频/资料</h2>
+        <p class="muted">支持批量上传。系统会按文件名和类型自动归类到：真题、作业、练习、课程视频、口语课程、课后阅读书籍、真题音频等。</p>
+        <form id="uploadForm" class="form">
+          <input type="file" id="file" multiple required />
+          <div class="row">
+            <label>类型<select id="kind"><option>video</option><option>audio</option><option>file</option></select></label>
+            <label>等级<select id="matLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option><option value="">不限</option></select></label>
+            <label>分类<input id="matCategory" placeholder="留空自动分类：真题/作业/练习/课程视频" /></label>
+          </div>
+          <label>标签（逗号分隔）<input id="matTags" placeholder="Perfekt, 听力, Goethe" /></label>
+          <label>来源/备注<input id="matSource" value="百度网盘/本地导入" /></label>
+          <button>上传</button>
+        </form>
+        <pre id="uploadResult"></pre>
+        <div id="uploadPreview" class="list"></div>
+      </div>
+    </section>
+
+    <section id="courses" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>新建课程</h2>
+          <form id="courseForm" class="form">
+            <label>课程名<input id="courseTitle" required placeholder="A1 第01课：问候与自我介绍" /></label>
+            <div class="row">
+              <label>等级<select id="courseLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></select></label>
+              <label>分类<input id="courseCategory" value="视频课程" /></label>
+            </div>
+            <label>绑定资料 ID（逗号分隔）<input id="courseMaterials" placeholder="mat_xxx, mat_yyy" /></label>
+            <label>标签<input id="courseTags" placeholder="问候, 口语, A1" /></label>
+            <label>说明<textarea id="courseDesc"></textarea></label>
+            <button>保存课程</button>
+          </form>
+        </article>
+        <article class="card">
+          <h2>课程列表</h2>
+          <div id="courseList" class="list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="wrongbook" class="tab">
+      <div class="card">
+        <h2>错题本</h2>
+        <p class="muted">这里收集所有答错过的题。你可以反复做，系统会保留你做错的记录。</p>
+        <div id="wrongbookList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="vocab" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>单词词库</h2>
+          <p class="muted">按市面背单词软件做：词性、冠词、复数、中文意思、例句、语法说明、掌握度。可以手动添加，也可以从词汇书/AI文本提取。</p>
+          <form id="vocabForm" class="form">
+            <div class="row">
+              <label>单词<input id="vocWord" required placeholder="lernen" /></label>
+              <label>冠词<input id="vocArticle" placeholder="der/die/das" /></label>
+              <label>复数<input id="vocPlural" placeholder="Studenten" /></label>
+            </div>
+            <div class="row">
+              <label>词性<input id="vocPos" placeholder="动词/名词/形容词" /></label>
+              <label>等级<select id="vocLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></select></label>
+              <label>中文意思<input id="vocMeaning" placeholder="学习" /></label>
+            </div>
+            <label>例句<textarea id="vocExamples" placeholder="Ich lerne Deutsch."></textarea></label>
+            <label>语法/搭配<textarea id="vocGrammar" placeholder="规则动词：ich lerne, du lernst..."></textarea></label>
+            <button>加入词库</button>
+          </form>
+          <h3>从词汇书/文本提取</h3>
+          <textarea id="vocabImportText" placeholder="粘贴词汇书内容、课文、AI生成词表，系统会提取德语单词"></textarea>
+          <button id="importVocabBtn" type="button">AI 提取并加入词库</button>
+        </article>
+        <article class="card">
+          <h2>词库列表</h2>
+          <div class="filters"><input id="vocabSearch" placeholder="搜索单词/中文/例句" /><button id="reloadVocabBtn" type="button">刷新</button></div>
+          <div id="vocabList" class="list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="lookup" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>站内查词 / 查语法 / 句子讲透</h2>
+          <p class="muted">不用跳浏览器：输入单词或整句，站内解释词义、词性、冠词、例句、语法结构、发音重点。</p>
+          <label>查单词<input id="lookupWord" placeholder="möchte / Student / weil" /></label>
+          <button id="lookupBtn" type="button">查词汇并发音</button>
+          <label>分析句子<textarea id="sentenceInput" placeholder="Ich lerne Deutsch, weil ich in Deutschland arbeiten möchte."></textarea></label>
+          <button id="analyseSentenceBtn" type="button">把句子和词汇讲透</button>
+        </article>
+        <article class="card">
+          <h2>解释结果</h2>
+          <div id="lookupResult" class="list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="translate" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>德中实时翻译</h2>
+          <p class="muted">前端只请求本站 /api/translate，DeepL/百度翻译密钥全部放在后端环境变量里。选中文本后可一键翻译。</p>
+          <div class="row">
+            <label>方向<select id="transDirection"><option value="de-zh">德语 → 中文</option><option value="zh-de">中文 → 德语</option></select></label>
+            <label>接口<select id="transProvider"><option value="auto">自动：DeepL优先/百度兜底</option><option value="deepl">DeepL</option><option value="baidu">百度翻译</option></select></label>
+          </div>
+          <textarea id="transInput" placeholder="Guten Tag! Ich möchte Deutsch lernen."></textarea>
+          <div class="actions"><button id="translateBtn" type="button">翻译</button><button id="translateSelectionBtn" type="button">翻译当前选中文本</button><button id="speakTransBtn" type="button">朗读原文</button></div>
+        </article>
+        <article class="card"><h2>翻译结果</h2><div id="transResult" class="list"></div></article>
+      </div>
+    </section>
+
+    <section id="resources" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>课件 PDF / 听力专区</h2>
+          <p class="muted">支持本地上传资源，也支持免费 OSS/CDN 直链。PDF 在线预览，音频倍速播放，网盘导入资料会自动出现在这里。</p>
+          <div class="filters">
+            <select id="resourceKind"><option value="">全部资源</option><option value="file">PDF/文档</option><option value="audio">听力音频</option><option value="video">网课视频</option></select>
+            <button id="loadResourcesBtn" type="button">刷新资源</button>
+          </div>
+          <div id="resourceList" class="list"></div>
+        </article>
+        <article class="card">
+          <h2>免费 OSS 使用方式</h2>
+          <ol class="steps">
+            <li>把 PDF/MP3/MP4 上传到 Cloudflare R2、Backblaze B2 或 GitHub Release。</li>
+            <li>生成只读 HTTPS 公网 URL，填入资料的 remoteUrl/url 字段或通过网盘导入保留 remotePath。</li>
+            <li>前端用浏览器原生 PDF iframe、audio/video 播放，不暴露任何 API 密钥。</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section id="tools" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>AI 德语作文批改</h2>
+          <p class="muted">DeepSeek 优先检查变位、冠词、三/四格、词序；失败时本地规则兜底。</p>
+          <div class="row"><label>等级<select id="correctLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label></div>
+          <textarea id="correctInput" placeholder="Ich habe ein Termin und ich gehe zu der Arzt."></textarea>
+          <button id="correctBtn" type="button">AI批改作文/句子</button>
+          <div id="correctResult" class="list"></div>
+        </article>
+        <article class="card">
+          <h2>学习打卡 / 同步</h2>
+          <p class="muted">生词、错题、AI会话、打卡记录都挂在本地演示账号 userId 下；本版本不接 Supabase 云同步。</p>
+          <div class="row"><label>今日学习分钟<input id="checkinMinutes" type="number" value="30" min="1" /></label></div>
+          <label>备注<input id="checkinNote" value="词汇+听力+作文批改" /></label>
+          <button id="checkinBtn" type="button">保存今日打卡</button>
+          <pre id="checkinResult"></pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="plan" class="tab">
+      <div class="card">
+        <h2>一年达到德语 B2 科学计划</h2>
+        <p class="muted">根据你的课程完成数、资料数、错题数动态生成。每天按“课程 + 练习 + 错题 + AI口语”推进。</p>
+        <button id="loadPlanBtn">生成/刷新计划</button>
+        <div id="planResult" class="list"></div>
+      </div>
+    </section>
+
+    <section id="questions" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>新增题目</h2>
+          <form id="questionForm" class="form">
+            <label>标题<input id="qTitle" required placeholder="Perfekt 动词变位填空" /></label>
+            <label>题干<textarea id="qStem" placeholder="Ich ___ gestern Deutsch gelernt."></textarea></label>
+            <div class="row">
+              <label>题型<select id="qType"><option value="short">简答/填空</option><option value="choice">选择题</option><option value="writing">写作</option><option value="speaking">口语</option><option value="listening">听力</option><option value="sentence">造句</option></select></label>
+              <label>等级<select id="qLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></select></label>
+              <label>分类<input id="qCategory" value="书本习题" /></label>
+            </div>
+            <label>选择题选项（每行一个）<textarea id="qOptions"></textarea></label>
+            <label>标准答案<textarea id="qAnswer" required></textarea></label>
+            <label>解析/AI讲解<textarea id="qExplanation" required placeholder="说明为什么这样写，涉及的语法点是什么"></textarea></label>
+            <label>音频 materialId<input id="qAudio" placeholder="mat_xxx" /></label>
+            <label>来源<input id="qSource" placeholder="Goethe A1 真题 / 教材第3章 / 百度网盘文件名" /></label>
+            <label>标签<input id="qTags" placeholder="Perfekt, 动词, 听力" /></label>
+            <button>保存题目</button>
+          </form>
+        </article>
+        <article class="card">
+          <h2>题库</h2>
+          <div class="filters">
+            <input id="search" placeholder="搜索题目/标签/来源" />
+            <select id="filterLevel"><option value="">全部等级</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></select>
+          </div>
+          <div id="questionList" class="list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="import" class="tab">
+      <div class="card">
+        <h2>JSON 批量导入题目</h2>
+        <p class="muted">推荐用 JSON 导入，减少格式错乱。音频先上传，拿到 materialId 后填到 audioId。</p>
+        <textarea id="importText" class="code" spellcheck="false">{
+  "questions": [
+    {
+      "title": "A1 听力题 01",
+      "stem": "听音频，选择正确答案。",
+      "type": "choice",
+      "level": "A1",
+      "category": "真题",
+      "source": "Goethe A1 练习",
+      "options": ["A", "B", "C"],
+      "answer": "A",
+      "explanation": "答案 A 对应音频中的关键词 ...",
+      "audioId": "mat_替换成上传后的音频ID",
+      "tags": ["听力", "Goethe", "A1"]
+    }
+  ]
+}</textarea>
+        <button id="importBtn">导入</button>
+        <pre id="importResult"></pre>
+      </div>
+    </section>
+
+    <section id="ai" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>AI 口语 / 写作 / 发音教练</h2>
+          <p class="muted">站内直接生成母语者发音、逐句纠错、语法/结构/发音不足。无需跳到浏览器搜索。</p>
+          <div class="row">
+            <label>模式<select id="aiKind"><option value="speaking">口语</option><option value="writing">写作</option><option value="pronunciation">发音</option></select></label>
+            <label>等级<select id="aiLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label>
+          </div>
+          <label>训练内容<textarea id="aiInput" placeholder="输入德语句子、作文、口语转写文本或跟读文本"></textarea></label>
+          <button id="makePrompt">站内生成 AI 批改 + 母语者发音</button>
+          <pre id="aiPrompt"></pre>
+        </article>
+        <article class="card">
+          <h2>推荐练习逻辑</h2>
+          <p>课程完成后，会按 <b>等级、分类、标签</b> 匹配题目。比如课程标签含 “Perfekt”，题库中同等级或标签含 Perfekt 的题会被优先推荐。</p>
+          <p class="muted">下一步可升级：根据错题率、掌握度、间隔复习算法自动排练习。</p>
+          <p class="muted">现在也可以为当天课程一键生成专属练习题，并导出课程讲义页打印成 PDF。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="aiChat" class="tab">
+      <div class="chat-layout">
+        <aside class="card chat-side">
+          <h2>历史会话</h2>
+          <div class="actions"><button id="newChatBtn" type="button">新建会话</button><button id="compactChatBtn" type="button">/compact 压缩</button></div>
+          <div id="chatSessionList" class="list"></div>
+        </aside>
+        <article class="card chat-panel">
+          <h2>AI 智能对话</h2>
+          <p class="muted">像聊天软件一样使用：发音、语法纠错、口语纠音、写作批改都在本网站内完成，并自动朗读母语者版本。</p>
+          <div class="mode-tabs">
+            <button data-mode="chat" class="active">对话</button>
+            <button data-mode="speaking">口语纠音</button>
+            <button data-mode="writing">写作批改</button>
+            <button data-mode="pronunciation">发音训练</button>
+          </div>
+          <div class="row">
+            <label>等级<select id="chatLevel"><option>A1</option><option>A2</option><option>B1</option><option>B2</option></select></label>
+            <label>AI模型<select id="chatProvider"></select></label>
+          </div>
+          <div id="chatHistory" class="chat-stream"></div>
+          <label>输入内容<textarea id="chatInput" placeholder="像微信一样输入：一句德语、口语转写、作文，或要跟读的句子。"></textarea></label>
+          <div class="actions">
+            <button id="sendChatBtn">发送到 AI</button>
+            <button id="reloadChatBtn" type="button">刷新聊天记录</button>
+            <button id="speakReplyBtn" type="button">朗读最新回复</button>
+            <button id="exportChatBtn" type="button">复制最近聊天</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="aiModels" class="tab">
+      <div class="grid two">
+        <article class="card">
+          <h2>多 AI 大模型接入</h2>
+          <p class="muted">支持 OpenAI 兼容接口、Ollama 本地模型、本地规则兜底。API Key 只保存在本机 data/db.json，用于个人学习站。</p>
+          <form id="aiProviderForm" class="form">
+            <label>提供商 ID<input id="providerId" placeholder="deepseek / qwen / openai / ollama" required /></label>
+            <label>显示名称<input id="providerName" placeholder="DeepSeek / 通义千问 / OpenAI / Ollama" required /></label>
+            <div class="row">
+              <label>类型<select id="providerType"><option value="openai-compatible">OpenAI兼容接口</option><option value="ollama">Ollama本地模型</option><option value="local">本地规则模型</option></select></label>
+              <label>启用<select id="providerEnabled"><option value="true">启用</option><option value="false">停用</option></select></label>
+            </div>
+            <label>Base URL<input id="providerBaseUrl" placeholder="https://api.deepseek.com/v1 / http://localhost:11434" /></label>
+            <label>模型名<input id="providerModel" placeholder="deepseek-chat / qwen-plus / gpt-4o-mini / qwen2.5:7b" /></label>
+            <label>API Key<input id="providerApiKey" type="password" placeholder="只在新增或更换时填写；留空不覆盖旧Key" /></label>
+            <div class="actions"><button>保存模型</button><button id="testProviderBtn" type="button">测试当前ID模型</button></div>
+          </form>
+          <div class="info-box small">
+            <b>常见配置</b><br>
+            DeepSeek：Base URL 填 <code>https://api.deepseek.com/v1</code>，模型 <code>deepseek-chat</code><br>
+            OpenAI：Base URL 填 <code>https://api.openai.com/v1</code>，模型 <code>gpt-4o-mini</code><br>
+            Ollama：先本机运行 Ollama，Base URL 填 <code>http://localhost:11434</code>，模型如 <code>qwen2.5:7b</code>
+          </div>
+        </article>
+        <article class="card">
+          <h2>已配置模型</h2>
+          <div id="providerList" class="list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="searchNet" class="tab">
+      <div class="card">
+        <h2>AI 全网搜索</h2>
+        <p class="muted">当前环境没有可用搜索 API，所以这里先提供“站内搜索 + 一键打开外部搜索”。后续接入搜索 API 后，可直接在站内返回全网结果。</p>
+        <div class="filters">
+          <input id="netQuery" placeholder="例如：Goethe B2 Schreiben Redemittel / 德语 B1 听力 真题" />
+          <button id="netSearchBtn">搜索</button>
+        </div>
+        <div id="netResults" class="list"></div>
+      </div>
+    </section>
+  </main>
+
+  <template id="itemTpl"><div class="item"></div></template>
+  <script src="/app.js"></script>
+  </section>
+</body>
+</html>
