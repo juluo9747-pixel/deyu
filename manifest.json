@@ -1,9 +1,0 @@
-{
-  "name": "德语个人学习库",
-  "short_name": "Deutsch Study",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f6f3ee",
-  "theme_color": "#1f2b2a",
-  "description": "个人德语课程、真题、习题、错题本和课后练习系统"
-}
